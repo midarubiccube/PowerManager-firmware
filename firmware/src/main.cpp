@@ -19,18 +19,6 @@ int _write(int file, char *ptr, int len)
 
 int main(void)
 {
-  HAL_Init();
-  SystemClock_Config();
-  setbuf(stdout, NULL);
-
-  MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_FDCAN1_Init();
-  MX_ADC1_Init();
-  MX_TIM1_Init();
-  MX_USART1_UART_Init();
-  MX_SPI1_Init();
-
   FullColorLED led{&htim1, TIM_CHANNEL_1};
   led.set_rgb(255, 0, 0);
   led.start();
@@ -55,11 +43,10 @@ int main(void)
     for (int i = 0; i < 3; i++) {
       adcv[i] = MCP3208_read_u16(i);
     }
-    /*HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_SET);
     HAL_Delay(1000);
     HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_RESET);
-    HAL_Delay(1000);*/
+    HAL_Delay(1000);
     printf("Read VAL:\t%d\t%d\t%d\r\n", adcv[0], adcv[1], adcv[2]);
   }
-  /* USER CODE END 3 */
 }
