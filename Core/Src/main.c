@@ -62,6 +62,11 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+int _write(int file, char *ptr, int len)
+{
+  HAL_UART_Transmit(&huart1,(uint8_t *)ptr,len,10);
+  return len;
+}
 
 /* USER CODE END 0 */
 
@@ -79,7 +84,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+                                                                                                                                                                                                                                                                                                                                                                                                                          HAL_Init();
 
   /* USER CODE BEGIN Init */
 
