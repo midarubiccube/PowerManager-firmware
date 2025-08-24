@@ -29,7 +29,9 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-
+#define MCP3208_START_BIT   0x04
+#define MCP3208_MODE_SINGLE 0x02
+#define MCP3208_MODE_DIFF   0x00
 /* USER CODE END Includes */
 
 extern SPI_HandleTypeDef hspi1;
@@ -41,7 +43,7 @@ extern SPI_HandleTypeDef hspi1;
 void MX_SPI1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+uint16_t MCP3208_read_u16(uint8_t channel);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
