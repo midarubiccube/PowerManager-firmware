@@ -49,9 +49,9 @@ void MX_FDCAN1_Init(void)
   hfdcan1.Init.NominalTimeSeg1 = 29;
   hfdcan1.Init.NominalTimeSeg2 = 10;
   hfdcan1.Init.DataPrescaler = 2;
-  hfdcan1.Init.DataSyncJumpWidth = 5;
-  hfdcan1.Init.DataTimeSeg1 = 4;
-  hfdcan1.Init.DataTimeSeg2 = 5;
+  hfdcan1.Init.DataSyncJumpWidth = 4;
+  hfdcan1.Init.DataTimeSeg1 = 11;
+  hfdcan1.Init.DataTimeSeg2 = 4;
   hfdcan1.Init.StdFiltersNbr = 0;
   hfdcan1.Init.ExtFiltersNbr = 0;
   hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
