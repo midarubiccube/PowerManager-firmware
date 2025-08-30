@@ -1,23 +1,26 @@
 #include "main.h"
 #include <cstring>
+#include "stdio.h"
 
 #include "CANFD.hpp"
 #include "FullColorLED.hpp"
 
 CANFD* canfd;
+FullColorLED led{&htim1, TIM_CHANNEL_1};
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
   if((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
 	  canfd->rx_interrupt_task();
+    led.set_rgb(255, 0, 0);
   }
 }
 
 extern "C" void StartDefaultTask(void *argument)
 {
-  FullColorLED led{&htim1, TIM_CHANNEL_1};
+
   led.set_rgb(255, 0, 0);
   led.start();
-  
+  printf("start\n");
   canfd = new CANFD(&hfdcan1);
 	canfd->init();
 
@@ -25,7 +28,7 @@ extern "C" void StartDefaultTask(void *argument)
 	test.id=10;
 	test.size = 32;
 	memset(test.data, 0, 64);
-	canfd->tx(test);
+	//canfd->tx(test);
 
   while (1)
   {
