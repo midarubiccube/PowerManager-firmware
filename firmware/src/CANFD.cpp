@@ -3,7 +3,17 @@
 #include "CANFD.hpp"
 #include "fdcan.h"
 
-void CANFD::init(){
+void CANFD::start(){
+	if (HAL_FDCAN_ConfigFilter(fdcan_, &filter_) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
+	if (HAL_FDCAN_ConfigGlobalFilter(fdcan_, FDCAN_REJECT, FDCAN_REJECT, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
 	if(HAL_FDCAN_Start(fdcan_)!= HAL_OK) {
 		Error_Handler();
 	}
@@ -49,6 +59,8 @@ void CANFD::rx_interrupt_task(void){
 	FDCAN_RxHeaderTypeDef	RxHeader;
 	uint8_t		fdcan1RxData[64];
 
+
+
     if (HAL_FDCAN_GetRxMessage(fdcan_, FDCAN_RX_FIFO0, &RxHeader, fdcan1RxData) != HAL_OK) {
 		Error_Handler();
     }
@@ -77,65 +89,11 @@ bool CANFD::rx(CANFD_Frame &rx_frame){
 	}
 }
 
-//filter///////////////////////////////////////////////////////////////////////////////////
-/*void CANFD::set_filter_mask(uint32_t id,uint32_t mask,filter_mode mode,bool as_std){
-	FDCAN_FilterTypeDef filter;
-	uint32_t filter_id;
-	uint32_t filter_mask;
-	switch(mode){
-	case filter_mode::only_std:
-		if(as_std){
-			filter_id = id << 21;
-			filter_mask = mask << 21 | 0x4;
-		}else{
-			filter_id = id << 3;
-			filter_mask = mask << 3 | 0x4;
-		}
-		break;
-	case filter_mode::only_ext:
-		if(as_std){
-//			filter_id = id << 21 | 0x4;
-			filter_mask = mask << 21 | 0x4;
-		}else{
-			filter_id = id << 3 | 0x4;
-			filter_mask = mask << 3 | 0x4;
-		}
-		break;
-	case filter_mode::std_and_ext:
-		if(as_std){
-			filter_id = id << 21;
-			filter_mask = mask << 21;
-		}else{
-			filter_id = id << 3;
-			filter_mask = mask << 3;
-		}
-
-	}
-
-	filter.FilterIdHigh         = filter_id >> 16;
-	filter.FilterIdLow          = filter_id;
-	filter.FilterMaskIdHigh     = filter_mask >> 16;
-	filter.FilterMaskIdLow      = filter_mask;
-	filter.FilterScale          = CAN_FILTERSCALE_32BIT; // 32モード
-	filter.FilterFIFOAssignment = rx_fifo;      // FIFO0へ格納
-	filter.FilterBank           = 0;
-	filter.FilterMode           = CAN_FILTERMODE_IDMASK; // IDマスクモード
-	filter.SlaveStartFilterBank = 14;
-	filter.FilterActivation     = ENABLE;
-
-	HAL_FDCAN_ConfigGlobalFilter(can, &filter);
+void CANFD::set_filter_mask(uint32_t id,uint32_t mask){
+	filter_.IdType = FDCAN_STANDARD_ID;
+	filter_.FilterIndex = 0;
+	filter_.FilterType = FDCAN_FILTER_MASK;
+	filter_.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+	filter_.FilterID1 = id;
+	filter_.FilterID2 = mask;
 }
-void CANFD::set_filter_free(void){
-	FDCAN_FilterTypeDef filter;
-	filter.FilterIdHigh         = 0;
-	filter.FilterIdLow          = 0;
-	filter.FilterMaskIdHigh     = 0;
-	filter.FilterMaskIdLow      = 0;
-	filter.FilterScale          = CAN_FILTERSCALE_32BIT;
-	filter.FilterFIFOAssignment = rx_fifo;
-	filter.FilterBank           = 0;
-	filter.FilterMode           = CAN_FILTERMODE_IDMASK;
-	filter.SlaveStartFilterBank = 14;
-	filter.FilterActivation     = ENABLE;
-	HAL_FDCAN_ConfigGlobalFilter(can, &filter);
-}*/

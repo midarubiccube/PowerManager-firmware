@@ -20,18 +20,21 @@ extern "C" void StartDefaultTask(void *argument)
 
   led.set_rgb(255, 0, 0);
   led.start();
-  printf("start\n");
   canfd = new CANFD(&hfdcan1);
-	canfd->init();
+  canfd->set_filter_mask(15, 0x7ff);
+	canfd->start();
+  
 
 	CANFD_Frame test;
 	test.id=10;
 	test.size = 32;
 	memset(test.data, 0, 64);
+
 	//canfd->tx(test);
 
   while (1)
   {
+    printf("start\n");
     led.set_rgb(0, 0, 0);
     HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_SET);
     osDelay(10000);

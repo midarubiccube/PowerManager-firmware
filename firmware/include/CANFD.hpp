@@ -20,13 +20,14 @@ private:
 	uint8_t		TxData[64];
 	uint32_t head = 0;
 	uint32_t tail = 0;
+	FDCAN_FilterTypeDef filter_;
 
 public:
 	CANFD(FDCAN_HandleTypeDef *can) : fdcan_(can)
 	{
 	}
 	//can tx CANFD_Frame/////////////////////////////
-	void init();
+	void start();
 	bool tx(CANFD_Frame &tx_data);
 
 	//can rx fuctions//////////////////////////////
@@ -35,8 +36,6 @@ public:
 	bool rx(CANFD_Frame &rx_frame);
 
 	//can filter setting///////////////////////////
-	//void set_filter_mask(uint32_t id,uint32_t mask,filter_mode mode,bool as_std);
+	void set_filter_mask(uint32_t id,uint32_t mask);
 	void set_filter_free(void);
 };
-
-extern CANFD *canfd;
