@@ -7,6 +7,7 @@
 
 CANFD* canfd;
 FullColorLED led{&htim1, TIM_CHANNEL_1};
+int data;
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
   if((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
@@ -21,7 +22,6 @@ extern "C" void StartDefaultTask(void *argument)
   led.set_rgb(255, 0, 0);
   led.start();
   canfd = new CANFD(&hfdcan1);
-  canfd->set_filter_mask(15, 0x7ff);
 	canfd->start();
   
 
@@ -35,14 +35,6 @@ extern "C" void StartDefaultTask(void *argument)
   while (1)
   {
     printf("start\n");
-    led.set_rgb(0, 0, 0);
-    HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_SET);
-    osDelay(10000);
-    HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_RESET);
-    osDelay(100);
-    HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_SET);
-    osDelay(1000);
-    HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_RESET);
     led.set_rgb(0, 0, 0);
     osDelay(10000);
   }

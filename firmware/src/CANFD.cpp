@@ -4,15 +4,11 @@
 #include "fdcan.h"
 
 void CANFD::start(){
-	if (HAL_FDCAN_ConfigFilter(fdcan_, &filter_) != HAL_OK)
-	{
-		Error_Handler();
-	}
 
-	if (HAL_FDCAN_ConfigGlobalFilter(fdcan_, FDCAN_REJECT, FDCAN_REJECT, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0) != HAL_OK)
+	/*if (HAL_FDCAN_ConfigGlobalFilter(fdcan_, FDCAN_REJECT, FDCAN_REJECT, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0) != HAL_OK)
 	{
 		Error_Handler();
-	}
+	}*/
 
 	if(HAL_FDCAN_Start(fdcan_)!= HAL_OK) {
 		Error_Handler();
@@ -72,8 +68,15 @@ void CANFD::rx_interrupt_task(void){
 
 	rx_buff[head].id = RxHeader.Identifier;
 	rx_buff[head].size = RxHeader.DataLength;
-	memcpy(&rx_buff[head].data, fdcan1RxData, 64);
+ 	memcpy(&rx_buff[head].data, fdcan1RxData, 64);
 	rx_buff[head].is_free = false;
+	if (fdcan1RxData[0] == 1){
+		HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_SET);
+	} else if(fdcan1RxData[0] == 0) {
+		HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_RESET);
+	}
+
 
 	head = (head+1)&CAN_RX_BUFF_AND;
 }
