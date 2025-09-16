@@ -1,15 +1,17 @@
 #include <string.h>
 
 #include "CANFD.hpp"
+#include "FullColorLED.hpp"
 #include "fdcan.h"
+#include "message.hpp"
+
+extern FullColorLED led;
 
 void CANFD::start(){
-
-	/*if (HAL_FDCAN_ConfigGlobalFilter(fdcan_, FDCAN_REJECT, FDCAN_REJECT, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0) != HAL_OK)
+	if (HAL_FDCAN_ConfigGlobalFilter(fdcan_, FDCAN_REJECT, FDCAN_REJECT, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0) != HAL_OK)
 	{
 		Error_Handler();
-	}*/
-
+	}
 	if(HAL_FDCAN_Start(fdcan_)!= HAL_OK) {
 		Error_Handler();
 	}
@@ -55,8 +57,6 @@ void CANFD::rx_interrupt_task(void){
 	FDCAN_RxHeaderTypeDef	RxHeader;
 	uint8_t		fdcan1RxData[64];
 
-
-
     if (HAL_FDCAN_GetRxMessage(fdcan_, FDCAN_RX_FIFO0, &RxHeader, fdcan1RxData) != HAL_OK) {
 		Error_Handler();
     }
@@ -65,18 +65,11 @@ void CANFD::rx_interrupt_task(void){
           /* Notification Error */
     	Error_Handler();
     }
-
+	
 	rx_buff[head].id = RxHeader.Identifier;
 	rx_buff[head].size = RxHeader.DataLength;
  	memcpy(&rx_buff[head].data, fdcan1RxData, 64);
 	rx_buff[head].is_free = false;
-	if (fdcan1RxData[0] == 1){
-		HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_SET);
-	} else if(fdcan1RxData[0] == 0) {
-		HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_RESET);
-	}
-
 
 	head = (head+1)&CAN_RX_BUFF_AND;
 }
@@ -93,10 +86,15 @@ bool CANFD::rx(CANFD_Frame &rx_frame){
 }
 
 void CANFD::set_filter_mask(uint32_t id,uint32_t mask){
-	filter_.IdType = FDCAN_STANDARD_ID;
+	filter_.IdType = FDCAN_EXTENDED_ID;
 	filter_.FilterIndex = 0;
 	filter_.FilterType = FDCAN_FILTER_MASK;
 	filter_.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
 	filter_.FilterID1 = id;
 	filter_.FilterID2 = mask;
+
+	if (HAL_FDCAN_ConfigFilter(fdcan_, &filter_) != HAL_OK)
+	{
+		Error_Handler();
+	}
 }

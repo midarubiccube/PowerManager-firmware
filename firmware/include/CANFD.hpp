@@ -38,4 +38,11 @@ public:
 	//can filter setting///////////////////////////
 	void set_filter_mask(uint32_t id,uint32_t mask);
 	void set_filter_free(void);
+
+	static inline uint16_t len2dlc(uint16_t byte) {
+    	return (byte <= 8) ? byte :
+           (byte <= 24) ? (byte - 8 + 3) / 4 + 8 :
+           (byte <= 32) ? (byte - 24 + 7) / 8 + 12 :
+           (byte - 32 + 15) / 16 + 13;
+	}
 };
