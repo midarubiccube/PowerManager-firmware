@@ -4,6 +4,7 @@
 *.launch
 /build/
 /Drivers/
+/.vscode/
 
 # CMake
 CMakeLists.txt.user

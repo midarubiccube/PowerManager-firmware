@@ -68,8 +68,9 @@ void Error_Handler(void);
 #define OC_GPIO_Port GPIOA
 #define CS_Pin GPIO_PIN_4
 #define CS_GPIO_Port GPIOA
-#define STOP_Pin GPIO_PIN_0
-#define STOP_GPIO_Port GPIOB
+#define EMENGECY_Pin GPIO_PIN_0
+#define EMENGECY_GPIO_Port GPIOB
+#define EMENGECY_EXTI_IRQn EXTI0_IRQn
 #define LED_Pin GPIO_PIN_8
 #define LED_GPIO_Port GPIOA
 #define DISCHARGE_Pin GPIO_PIN_9
