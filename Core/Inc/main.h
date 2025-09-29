@@ -31,7 +31,14 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "cmsis_os.h"
+#include "adc.h"
+#include "dma.h"
+#include "fdcan.h"
+#include "spi.h"
+#include "tim.h"
+#include "usart.h"
+#include "gpio.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -57,16 +64,19 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define SD_Pin GPIO_PIN_4
-#define SD_GPIO_Port GPIOA
-#define DISCHARGE_Pin GPIO_PIN_5
-#define DISCHARGE_GPIO_Port GPIOA
-#define STOP_Pin GPIO_PIN_0
-#define STOP_GPIO_Port GPIOB
+#define OC_Pin GPIO_PIN_1
+#define OC_GPIO_Port GPIOA
+#define CS_Pin GPIO_PIN_4
+#define CS_GPIO_Port GPIOA
+#define EMENGECY_Pin GPIO_PIN_0
+#define EMENGECY_GPIO_Port GPIOB
+#define EMENGECY_EXTI_IRQn EXTI0_IRQn
 #define LED_Pin GPIO_PIN_8
 #define LED_GPIO_Port GPIOA
-#define OC_Pin GPIO_PIN_9
-#define OC_GPIO_Port GPIOA
+#define DISCHARGE_Pin GPIO_PIN_9
+#define DISCHARGE_GPIO_Port GPIOA
+#define ONOFF_Pin GPIO_PIN_10
+#define ONOFF_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
