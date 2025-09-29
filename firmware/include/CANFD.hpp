@@ -10,6 +10,7 @@ struct CANFD_Frame{
 	uint8_t data[64]={0};
 	size_t size=0;
 	bool  is_free = true;
+	bool is_remote = false;
 };
 
 class CANFD{

@@ -10,6 +10,7 @@ CANFD* canfd;
 FullColorLED led{&htim1, TIM_CHANNEL_1};
 int data;
 extern osTimerId_t dischargeTimerHandle;
+bool onoff = false;
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
   if((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
@@ -27,10 +28,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     }
     else
     {
+      CANFD_Frame emengency_msg;
+      Message_format msg = {0};
+      msg.id.format.message_type = 0;
+      msg.id.format.from_id = 0; 
+      msg.id.format.from_type = 1;
+      emengency_msg.id = msg.id.id;
+      emengency_msg.is_remote = true;
+      emengency_msg.size = 0;
+      canfd->tx(emengency_msg);
       HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_SET);
+      osTimerStart(dischargeTimerHandle, 300);
     }
   }
 }
+
 
 extern "C" void StartDefaultTask(void *argument)
 {
@@ -49,6 +61,8 @@ extern "C" void StartDefaultTask(void *argument)
 
 	//canfd->tx(test);
 
+  float ad;
+
   while (1)
   {
     if (canfd->rx_available())
@@ -62,14 +76,23 @@ extern "C" void StartDefaultTask(void *argument)
         HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_RESET);
         osDelay(10);
         HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_SET);
+        onoff = true;
 	    } else {
 		    led.set_rgb(255, 0, 0);
         HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_RESET);
         osDelay(30);
         HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_SET);
         osTimerStart(dischargeTimerHandle, 300);
+        onoff = false;
 	    }
     }
+    HAL_ADC_Start(&hadc1);
+    if( HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK )
+    {
+	      ad = (HAL_ADC_GetValue(&hadc1) - 350) / 62.0;
+        printf("test=%f\n", ad);
+    }
+    HAL_ADC_Stop(&hadc1);
     osDelay(10);
   }
 }
