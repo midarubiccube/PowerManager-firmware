@@ -1,5 +1,4 @@
-#include "main.h"
-#include <cstring>
+                                                                                                                                                                                                                                 #include <cstring>
 #include "stdio.h"
 
 #include "message.hpp"
@@ -10,7 +9,7 @@ extern DMA_HandleTypeDef hdma_tim2_ch1;
 
 CANFD* canfd;
 FullColorLED led{&htim1, TIM_CHANNEL_1};
-WS2812B status_LED{&htim2, TIM_CHANNEL_2, &hdma_tim2_ch1};
+WS2812B status_LED{&htim2, TIM_CHANNEL_1, &hdma_tim2_ch1};
 int data;
 extern osTimerId_t dischargeTimerHandle;
 bool onoff = false;
@@ -22,8 +21,8 @@ void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
 }
 
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim){
-	  if (htim == &htim2) {
-    	status_LED.do_backRewrite();
+	if (htim == &htim2) {
+ 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000    	status_LED.do_backRewrite();
   }
 }
 

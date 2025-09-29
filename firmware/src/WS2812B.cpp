@@ -1,6 +1,6 @@
 #include "WS2812B.hpp"
 
-WS2812 B::WS2812B(TIM_HandleTypeDef* htim, uint32_t tim_channel_x, DMA_HandleTypeDef* hdma){
+WS2812B::WS2812B(TIM_HandleTypeDef* htim, uint32_t tim_channel_x, DMA_HandleTypeDef* hdma){
     HTIM = htim;
     TIM_CHANNEL_X = tim_channel_x;
     HDMA =hdma;
