@@ -5,12 +5,27 @@
 #include "message.hpp"
 #include "CANFD.hpp"
 #include "FullColorLED.hpp"
+#include "WS2812B.hpp"
+extern DMA_HandleTypeDef hdma_tim2_ch1;
 
 CANFD* canfd;
 FullColorLED led{&htim1, TIM_CHANNEL_1};
+WS2812B status_LED{&htim2, TIM_CHANNEL_2, &hdma_tim2_ch1};
 int data;
 extern osTimerId_t dischargeTimerHandle;
 bool onoff = false;
+
+void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
+  if (htim == &htim2) {
+    	status_LED.do_forwardRewrite();
+  }
+}
+
+void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim){
+	  if (htim == &htim2) {
+    	status_LED.do_backRewrite();
+  }
+}
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
   if((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET) {
@@ -94,6 +109,19 @@ extern "C" void StartDefaultTask(void *argument)
     }
     HAL_ADC_Stop(&hadc1);
     osDelay(10);
+  }
+}
+
+extern "C" void controllLEDTask(void* argument)
+{
+  for(int i = 0; i<50;i++)
+  {
+    status_LED.set_rgb(i, 255,255,255);
+  }
+  status_LED.show();
+  while (1)
+  {
+    osDelay(100);
   }
 }
 
