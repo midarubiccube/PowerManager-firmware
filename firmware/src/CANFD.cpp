@@ -1,15 +1,9 @@
-#include <string.h>
-
 #include "CANFD.hpp"
-#include "FullColorLED.hpp"
+
+#include <string.h>
 #include "fdcan.h"
-#include "message.hpp"
 
 void CANFD::start(){
-	if (HAL_FDCAN_ConfigGlobalFilter(fdcan_, FDCAN_REJECT, FDCAN_REJECT, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0) != HAL_OK)
-	{
-		Error_Handler();
-	}
 	if(HAL_FDCAN_Start(fdcan_)!= HAL_OK) {
 		Error_Handler();
 	}
@@ -22,7 +16,7 @@ void CANFD::start(){
 bool CANFD::tx(CANFD_Frame &tx_data){
 	FDCAN_TxHeaderTypeDef	TxHeader;
 	TxHeader.Identifier = tx_data.id;
-	TxHeader.IdType = FDCAN_EXTENDED_ID;
+	TxHeader.IdType = FDCAN_STANDARD_ID;
 	TxHeader.TxFrameType = tx_data.is_remote ? FDCAN_REMOTE_FRAME : FDCAN_DATA_FRAME;
 	TxHeader.DataLength = len2dlc(tx_data.size);
 	TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
@@ -85,7 +79,7 @@ bool CANFD::rx(CANFD_Frame &rx_frame){
 }
 
 void CANFD::set_filter_mask(uint32_t id,uint32_t mask){
-	filter_.IdType = FDCAN_EXTENDED_ID;
+	filter_.IdType = FDCAN_STANDARD_ID;
 	filter_.FilterIndex = 0;
 	filter_.FilterType = FDCAN_FILTER_MASK;
 	filter_.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;

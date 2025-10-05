@@ -1,10 +1,12 @@
-                                                                                                                                                                                                                                 #include <cstring>
+#include <cstring>
 #include "stdio.h"
 
-#include "message.hpp"
 #include "CANFD.hpp"
 #include "FullColorLED.hpp"
 #include "WS2812B.hpp"
+
+#include "message/powerboard.hpp"
+
 extern DMA_HandleTypeDef hdma_tim2_ch1;
 
 CANFD* canfd;
@@ -22,7 +24,7 @@ void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
 
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim){
 	if (htim == &htim2) {
- 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000    	status_LED.do_backRewrite();
+    status_LED.do_backRewrite();
   }
 }
 
@@ -43,10 +45,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     else
     {
       CANFD_Frame emengency_msg;
-      Message_format msg = {0};
-      msg.id.format.message_type = 0;
-      msg.id.format.from_id = 0; 
-      msg.id.format.from_type = 1;
+      PowerBoard_format msg = {0};
+      msg.id.format.broadcast = true;
+      msg.id.format.from_BoardID = 0;
+      msg.id.format.from_BoardType = Board_Type::PowerBoard;
+
       emengency_msg.id = msg.id.id;
       emengency_msg.is_remote = true;
       emengency_msg.size = 0;
@@ -65,15 +68,18 @@ extern "C" void StartDefaultTask(void *argument)
   led.start();
   canfd = new CANFD(&hfdcan1);
 	canfd->start();
-  canfd->set_filter_mask(1048576, 0xFFC000);
-  
+  ID filter_id;
+  filter_id.format.from_BoardType = Board_Type::Master_Board;
+  filter_id.format.to_BoardType = Board_Type::PowerBoard;
+  filter_id.format.message_type = Message_Type::Target;
+  filter_id.format.to_BoardID = 0;
+  //canfd->set_filter_mask(filter_id.id, 0);
 
 	CANFD_Frame test;
 	test.id=10;
 	test.size = 32;
 	memset(test.data, 0, 64);
-
-	//canfd->tx(test);
+  canfd->tx(test);
 
   float ad;
 
@@ -83,9 +89,9 @@ extern "C" void StartDefaultTask(void *argument)
     {
       CANFD_Frame data;
       canfd->rx(data);
-      Message_format msg = {0};
+      PowerBoard_format msg = {0};
       memcpy(&msg.data, data.data, 32);
-      if (msg.data.power_rsv.ON_OFF == 1){
+      if (msg.data.target.ON_OFF == 1){
 		    led.set_rgb(0, 255, 0);
         HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_RESET);
         osDelay(10);
@@ -104,9 +110,9 @@ extern "C" void StartDefaultTask(void *argument)
     if( HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK )
     {
 	      ad = (HAL_ADC_GetValue(&hadc1) - 350) / 62.0;
-        printf("test=%f\n", ad);
     }
     HAL_ADC_Stop(&hadc1);
+    
     osDelay(10);
   }
 }
