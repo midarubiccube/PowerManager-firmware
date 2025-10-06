@@ -4,6 +4,10 @@
 #include "fdcan.h"
 
 void CANFD::start(){
+	if (HAL_FDCAN_ConfigGlobalFilter(fdcan_, FDCAN_ACCEPT_IN_RX_FIFO1, FDCAN_ACCEPT_IN_RX_FIFO1, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0) != HAL_OK)
+	{
+		Error_Handler();
+	}
 	if(HAL_FDCAN_Start(fdcan_)!= HAL_OK) {
 		Error_Handler();
 	}
