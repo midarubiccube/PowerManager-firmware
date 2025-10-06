@@ -5,7 +5,7 @@
 #include "FullColorLED.hpp"
 #include "WS2812B.hpp"
 
-#include "message/powerboard.hpp"
+#include "messageFormat/powerboard.hpp"
 
 extern DMA_HandleTypeDef hdma_tim2_ch1;
 
@@ -51,12 +51,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     else
     {
       CANFD_Frame emengency_msg;
-      PowerBoard_format msg = {0};
-      msg.id.format.broadcast = true;
-      msg.id.format.from_BoardID = 0;
-      msg.id.format.from_BoardType = Board_Type::PowerBoard;
+      ID_Format id;
+      id.format.broadcast = true;
+      id.format.from_BoardID = 0;
+      id.format.from_BoardType = Board_Type::PowerBoard;
 
-      emengency_msg.id = msg.id.id;
+      emengency_msg.id = id.id;
       emengency_msg.is_remote = true;
       emengency_msg.size = 0;
       canfd->tx(emengency_msg);
@@ -100,7 +100,7 @@ extern "C" void StartDefaultTask(void *argument)
   canfd = new CANFD(&hfdcan1);
   canfd->start();
 
-  ID filter_id;
+  ID_Format filter_id;
   filter_id.format.from_BoardType = Board_Type::Master_Board;
   filter_id.format.to_BoardType = Board_Type::PowerBoard;
   filter_id.format.message_type = Message_Type::Target;
@@ -120,9 +120,9 @@ extern "C" void StartDefaultTask(void *argument)
     {
       CANFD_Frame data;
       canfd->rx(data);
-      auto msg = reinterpret_cast<Po *>(&data.data);
-      Relay_ONOFF(msg->data.target.ON_OFF)
-          HAL_ADC_Start(&hadc1);
+      auto msg = reinterpret_cast<PowerBoard_Target*>(&data.data);
+      Relay_ONOFF(msg->ON_OFF);
+      HAL_ADC_Start(&hadc1);
       if (HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK)
       {
         ad = (HAL_ADC_GetValue(&hadc1) - 350) / 62.0;
