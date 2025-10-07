@@ -106,11 +106,13 @@ extern "C" void StartDefaultTask(void *argument)
   canfd->start();
 
   ID_Format filter_id;
-  filter_id.format.from_BoardType = Board_Type::Master_Board;
+  filter_id.format.broadcast = true;
+  canfd->set_filter_mask(0, filter_id.id, 0x1fffffff);
+  
+  filter_id.id = 0;
   filter_id.format.to_BoardType = Board_Type::PowerBoard;
-  filter_id.format.message_type = Message_Type::Target;
   filter_id.format.to_BoardID = 0;
-  canfd->set_filter_mask(filter_id.id, 0x7ff);
+  canfd->set_filter_mask(1, filter_id.id, 0xFF);
 
   CANFD_Frame test;
   test.id = 10;
@@ -126,8 +128,17 @@ extern "C" void StartDefaultTask(void *argument)
     {
       CANFD_Frame data;
       canfd->rx(data);
-      auto msg = reinterpret_cast<PowerBoard_Target *>(&data.data);
-      Relay_ONOFF(msg->ON_OFF);
+
+      ID_Format rsv_id;
+      rsv_id.id = data.id;
+      if (rsv_id.format.from_BoardType == Board_Type::Master_Board && rsv_id.format.message_type == Message_Type::Target)
+      {
+        auto target = reinterpret_cast<PowerBoard_Target *>(&data.data);
+        Relay_ONOFF(target->ON_OFF);
+      } else {
+        printf("test");
+      }
+      
       HAL_ADC_Start(&hadc1);
       if (HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK)
       {
