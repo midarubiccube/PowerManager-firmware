@@ -15,6 +15,8 @@ WS2812B status_LED{&htim2, TIM_CHANNEL_1, &hdma_tim2_ch1};
 int data;
 extern osTimerId_t dischargeTimerHandle;
 
+bool ONOFF_flg = false;
+
 void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim)
 {
   if (htim == &htim2)
@@ -41,7 +43,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  if (GPIO_Pin == EMENGECY_Pin)
+  if (GPIO_Pin == EMENGECY_Pin && ONOFF_flg)
   {
     if (HAL_GPIO_ReadPin(EMENGECY_GPIO_Port, EMENGECY_Pin) == GPIO_PIN_RESET)
     {
@@ -82,9 +84,11 @@ void Relay_ONOFF(bool ONOFF)
       led.set_rgb(0, 255, 0);
     }
     HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_SET);
+    ONOFF_flg = true;
   }
   else
   {
+    ONOFF_flg = false;
     led.set_rgb(255, 0, 0);
     HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_RESET);
     osDelay(30);
