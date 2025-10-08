@@ -107,8 +107,8 @@ extern "C" void StartDefaultTask(void *argument)
 
   ID_Format filter_id;
   filter_id.format.broadcast = true;
-  canfd->set_filter_mask(0, filter_id.id, 0x1fffffff);
-  
+  canfd->set_filter_mask(0, filter_id.id, filter_id.id);
+
   filter_id.id = 0;
   filter_id.format.to_BoardType = Board_Type::PowerBoard;
   filter_id.format.to_BoardID = 0;
@@ -135,18 +135,44 @@ extern "C" void StartDefaultTask(void *argument)
       {
         auto target = reinterpret_cast<PowerBoard_Target *>(&data.data);
         Relay_ONOFF(target->ON_OFF);
-      } else {
+      }
+      else
+      {
         printf("test");
       }
-      
-      HAL_ADC_Start(&hadc1);
-      if (HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK)
-      {
-        ad = (HAL_ADC_GetValue(&hadc1) - 350) / 62.0;
-      }
-      HAL_ADC_Stop(&hadc1);
     }
+
     osDelay(10);
+  }
+}
+
+extern "C" void statusTaskFunc(void *argument)
+{
+  osDelay(1000);
+  for (;;)
+  {
+    float ad;
+    HAL_ADC_Start(&hadc1);
+    if (HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK)
+    {
+      ad = ((float)HAL_ADC_GetValue(&hadc1) - 350.0) / 62.0;
+    }
+    HAL_ADC_Stop(&hadc1);
+    PowerBoard_Status status = {0};
+    ID_Format id;
+    id.format.from_BoardID = 0;
+    id.format.from_BoardType = Board_Type::PowerBoard;
+    id.format.to_BoardID = 0;
+    id.format.to_BoardType = Board_Type::Master_Board;
+    id.format.message_type = Message_Type::Status;
+
+    status.Current = ad;
+    CANFD_Frame sendmsg;
+    sendmsg.id = id.id;
+    sendmsg.size = sizeof(PowerBoard_Status);
+    memcpy(sendmsg.data, &status, sizeof(PowerBoard_Status));
+    canfd->tx(sendmsg);
+    osDelay(200);
   }
 }
 

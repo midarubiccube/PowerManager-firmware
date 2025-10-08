@@ -71,6 +71,18 @@ const osThreadAttr_t controllLED_attributes = {
   .cb_size = sizeof(controllLEDControlBlock),
   .priority = (osPriority_t) osPriorityBelowNormal,
 };
+/* Definitions for statusTask */
+osThreadId_t statusTaskHandle;
+uint32_t statusTaskBuffer[ 512 ];
+osStaticThreadDef_t statusTaskControlBlock;
+const osThreadAttr_t statusTask_attributes = {
+  .name = "statusTask",
+  .stack_mem = &statusTaskBuffer[0],
+  .stack_size = sizeof(statusTaskBuffer),
+  .cb_mem = &statusTaskControlBlock,
+  .cb_size = sizeof(statusTaskControlBlock),
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* Definitions for dischargeTimer */
 osTimerId_t dischargeTimerHandle;
 const osTimerAttr_t dischargeTimer_attributes = {
@@ -84,6 +96,7 @@ const osTimerAttr_t dischargeTimer_attributes = {
 
 void StartDefaultTask(void *argument);
 void controllLEDTask(void *argument);
+void statusTaskFunc(void *argument);
 void dischargeCallback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -124,6 +137,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of controllLED */
   controllLEDHandle = osThreadNew(controllLEDTask, NULL, &controllLED_attributes);
+
+  /* creation of statusTask */
+  statusTaskHandle = osThreadNew(statusTaskFunc, NULL, &statusTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -169,6 +185,24 @@ __weak void controllLEDTask(void *argument)
     osDelay(1);
   }
   /* USER CODE END controllLEDTask */
+}
+
+/* USER CODE BEGIN Header_statusTaskFunc */
+/**
+* @brief Function implementing the statusTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_statusTaskFunc */
+__weak void statusTaskFunc(void *argument)
+{
+  /* USER CODE BEGIN statusTaskFunc */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END statusTaskFunc */
 }
 
 /* dischargeCallback function */
