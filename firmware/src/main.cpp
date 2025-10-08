@@ -14,8 +14,10 @@ FullColorLED led{&htim1, TIM_CHANNEL_1};
 WS2812B status_LED{&htim2, TIM_CHANNEL_1, &hdma_tim2_ch1};
 int data;
 extern osTimerId_t dischargeTimerHandle;
+extern osTimerId_t WatchDogTaskHandle;
 
 bool ONOFF_flg = false;
+uint32_t last_receive = 0;
 
 void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim)
 {
@@ -58,6 +60,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
       id.format.broadcast = true;
       id.format.from_BoardID = 0;
       id.format.from_BoardType = Board_Type::PowerBoard;
+      id.format.message_type = Message_Type::EMENGECY;
 
       emengency_msg.id = id.id;
       emengency_msg.is_remote = true;
@@ -121,6 +124,7 @@ extern "C" void StartDefaultTask(void *argument)
   canfd->tx(test);
 
   float ad;
+  osTimerStart(WatchDogTaskHandle, 500);
 
   while (1)
   {
@@ -136,10 +140,11 @@ extern "C" void StartDefaultTask(void *argument)
         auto target = reinterpret_cast<PowerBoard_Target *>(&data.data);
         Relay_ONOFF(target->ON_OFF);
       }
-      else
+      else if (rsv_id.format.broadcast == true && rsv_id.format.message_type == Message_Type::EMENGECY)
       {
-        printf("test");
+        Relay_ONOFF(false);
       }
+      last_receive = HAL_GetTick();
     }
 
     osDelay(10);
@@ -172,7 +177,7 @@ extern "C" void statusTaskFunc(void *argument)
     sendmsg.size = sizeof(PowerBoard_Status);
     memcpy(sendmsg.data, &status, sizeof(PowerBoard_Status));
     canfd->tx(sendmsg);
-    osDelay(200);
+    osDelay(100);
   }
 }
 
@@ -186,6 +191,14 @@ extern "C" void controllLEDTask(void *argument)
   while (1)
   {
     osDelay(100);
+  }
+}
+
+extern "C" void WatchDogCallback(void *argument)
+{
+  if(HAL_GetTick() - last_receive > 1000)
+  {
+    Relay_ONOFF(false);
   }
 }
 

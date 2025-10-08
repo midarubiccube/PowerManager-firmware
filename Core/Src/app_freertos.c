@@ -88,6 +88,11 @@ osTimerId_t dischargeTimerHandle;
 const osTimerAttr_t dischargeTimer_attributes = {
   .name = "dischargeTimer"
 };
+/* Definitions for WatchDogTask */
+osTimerId_t WatchDogTaskHandle;
+const osTimerAttr_t WatchDogTask_attributes = {
+  .name = "WatchDogTask"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -98,6 +103,7 @@ void StartDefaultTask(void *argument);
 void controllLEDTask(void *argument);
 void statusTaskFunc(void *argument);
 void dischargeCallback(void *argument);
+void WatchDogCallback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -122,6 +128,9 @@ void MX_FREERTOS_Init(void) {
   /* Create the timer(s) */
   /* creation of dischargeTimer */
   dischargeTimerHandle = osTimerNew(dischargeCallback, osTimerOnce, NULL, &dischargeTimer_attributes);
+
+  /* creation of WatchDogTask */
+  WatchDogTaskHandle = osTimerNew(WatchDogCallback, osTimerPeriodic, NULL, &WatchDogTask_attributes);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
@@ -211,6 +220,14 @@ __weak void dischargeCallback(void *argument)
   /* USER CODE BEGIN dischargeCallback */
 
   /* USER CODE END dischargeCallback */
+}
+
+/* WatchDogCallback function */
+__weak void WatchDogCallback(void *argument)
+{
+  /* USER CODE BEGIN WatchDogCallback */
+
+  /* USER CODE END WatchDogCallback */
 }
 
 /* Private application code --------------------------------------------------*/
