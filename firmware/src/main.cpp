@@ -17,6 +17,7 @@ extern osTimerId_t dischargeTimerHandle;
 extern osTimerId_t WatchDogTaskHandle;
 
 bool ONOFF_flg = false;
+bool emengecy_flag = false;
 uint32_t last_receive = 0;
 
 void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim)
@@ -45,36 +46,37 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+
   if (GPIO_Pin == EMENGECY_Pin && ONOFF_flg)
   {
+    CANFD_Frame emengency_msg;
+    ID_Format id;
+    id.format.broadcast = true;
+    id.format.from_BoardID = 0;
+    id.format.from_BoardType = Board_Type::PowerBoard;
+    id.format.message_type = Message_Type::EMENGECY;
     if (HAL_GPIO_ReadPin(EMENGECY_GPIO_Port, EMENGECY_Pin) == GPIO_PIN_RESET)
     {
       HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_RESET);
       led.set_rgb(0, 255, 0);
+      emengency_msg.data[0] = 0;
     }
     else
     {
       HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_SET);
-      CANFD_Frame emengency_msg;
-      ID_Format id;
-      id.format.broadcast = true;
-      id.format.from_BoardID = 0;
-      id.format.from_BoardType = Board_Type::PowerBoard;
-      id.format.message_type = Message_Type::EMENGECY;
-
-      emengency_msg.id = id.id;
-      emengency_msg.is_remote = true;
-      emengency_msg.size = 0;
-      canfd->tx(emengency_msg);
       led.set_rgb(100, 50, 0);
+      emengency_msg.data[0] = 1;
       osTimerStart(dischargeTimerHandle, 300);
     }
+    emengency_msg.id = id.id;
+    emengency_msg.size = 5;
+    canfd->tx(emengency_msg);
   }
 }
 
 void Relay_ONOFF(bool ONOFF)
 {
-  if (ONOFF)
+  if (ONOFF && !emengecy_flag)
   {
     HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_RESET);
     osDelay(5);
@@ -142,7 +144,16 @@ extern "C" void StartDefaultTask(void *argument)
       }
       else if (rsv_id.format.broadcast == true && rsv_id.format.message_type == Message_Type::EMENGECY)
       {
-        Relay_ONOFF(false);
+        if (data.data[0] == 1)
+        {
+          emengecy_flag = true;
+          Relay_ONOFF(false);
+        }
+        else
+        {
+          emengecy_flag = false;
+          Relay_ONOFF(true);
+        }
       }
       last_receive = HAL_GetTick();
     }
@@ -196,7 +207,7 @@ extern "C" void controllLEDTask(void *argument)
 
 extern "C" void WatchDogCallback(void *argument)
 {
-  if(HAL_GetTick() - last_receive > 1000)
+  if (HAL_GetTick() - last_receive > 1000)
   {
     Relay_ONOFF(false);
   }
