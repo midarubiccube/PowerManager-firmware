@@ -9,12 +9,12 @@ private:
     TIM_HandleTypeDef* HTIM;
     DMA_HandleTypeDef* HDMA;
 
-    #define HIGH 13 //ビット値1
+    #define HIGH 13//ビット値1
     #define LOW 7 //ビット値0
-    #define NUM_PIXELS 257 //NeoPixelの数
+    #define NUM_PIXELS 10 //NeoPixelの数
 
     uint8_t rgb_buf[NUM_PIXELS][3]; //色データの配列。1つのNeoPixelにつきGRBの3色分のデータがあります。
-    uint8_t pwm_buf[48]={0}; //PWM配列
+    uint32_t pwm_buf[48]={0}; //PWM配列
     uint16_t rgb_buf_p = 0; //色配列のどこまで書き込みがおわったかを記録する変数
 
 public:

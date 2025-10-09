@@ -194,13 +194,24 @@ extern "C" void statusTaskFunc(void *argument)
 
 extern "C" void controllLEDTask(void *argument)
 {
-  for (int i = 0; i < 50; i++)
+  for (int i = 0; i < 10; i++)
   {
-    status_LED.set_rgb(i, 255, 0, 0);
+    status_LED.set_rgb(i, 0, 255, 0);
   }
   status_LED.show();
   while (1)
   {
+    for (int i = 0; i < 10; i++)
+    {
+      status_LED.set_rgb(i, 255, 255, 255);
+    }
+    status_LED.show();
+    osDelay(100);
+    for (int i = 0; i < 10; i++)
+    {
+      status_LED.set_rgb(i, 0, 0, 0);
+    }
+    status_LED.show();
     osDelay(100);
   }
 }
