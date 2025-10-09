@@ -196,7 +196,7 @@ extern "C" void controllLEDTask(void *argument)
 {
   for (int i = 0; i < 50; i++)
   {
-    status_LED.set_rgb(i, 255, 255, 255);
+    status_LED.set_rgb(i, 255, 0, 0);
   }
   status_LED.show();
   while (1)
