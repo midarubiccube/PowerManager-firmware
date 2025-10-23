@@ -2,7 +2,8 @@
     "files.associations": {
         "tim.h": "c",
         "cstdlib": "c",
-        "cstring": "cpp"
+        "cstring": "cpp",
+        "cmath": "cpp"
     },
     "idf.port": "/dev/ttyUSB0"
 }

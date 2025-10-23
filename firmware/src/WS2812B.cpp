@@ -43,9 +43,9 @@ void WS2812B::do_backRewrite(){
 }
 
 void WS2812B::set_rgb(uint8_t id, uint8_t r, uint8_t g,uint8_t b){
-    rgb_buf[id][0]=r;
-    rgb_buf[id][1]=g;
-    rgb_buf[id][2]=b;
+    rgb_buf[id][0]=128-r;
+    rgb_buf[id][1]=128-g;
+    rgb_buf[id][2]=128-b;
 }
 
 void WS2812B::show(){

@@ -1,5 +1,6 @@
 #include <cstring>
 #include "stdio.h"
+#include "math.h"
 
 #include "CANFD.hpp"
 #include "FullColorLED.hpp"
@@ -19,6 +20,7 @@ extern osTimerId_t WatchDogTaskHandle;
 bool ONOFF_flg = false;
 bool emengecy_flag = false;
 uint32_t last_receive = 0;
+uint8_t rgb;
 
 void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim)
 {
@@ -59,12 +61,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     {
       HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_RESET);
       led.set_rgb(0, 255, 0);
+      rgb = 0;
       emengency_msg.data[0] = 0;
     }
     else
     {
       HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_SET);
       led.set_rgb(100, 50, 0);
+      rgb = 255;
       emengency_msg.data[0] = 1;
       osTimerStart(dischargeTimerHandle, 300);
     }
@@ -87,6 +91,7 @@ void Relay_ONOFF(bool ONOFF)
     else
     {
       led.set_rgb(0, 255, 0);
+      rgb = 128;
     }
     HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_SET);
     ONOFF_flg = true;
@@ -95,6 +100,7 @@ void Relay_ONOFF(bool ONOFF)
   {
     ONOFF_flg = false;
     led.set_rgb(255, 0, 0);
+    rgb = 255;
     HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_RESET);
     osDelay(30);
     HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_SET);
@@ -187,29 +193,50 @@ extern "C" void statusTaskFunc(void *argument)
     sendmsg.id = id.id;
     sendmsg.size = sizeof(PowerBoard_Status);
     memcpy(sendmsg.data, &status, sizeof(PowerBoard_Status));
-    canfd->tx(sendmsg);
+    // canfd->tx(sendmsg);
     osDelay(100);
   }
 }
 
+void rainbow(int count, uint8_t *rgb)
+{
+  int x = count / 255;
+  int y = count % 255;
+
+  if (x == 0)
+    rgb[0] = 255, rgb[1] = y, rgb[2] = 0;
+  else if (x == 1)
+    rgb[0] = 255 - y, rgb[1] = 255, rgb[2] = 0;
+  else if (x == 2)
+    rgb[0] = 0, rgb[1] = 255, rgb[2] = y;
+  else if (x == 3)
+    rgb[0] = 0, rgb[1] = 255 - y, rgb[2] = 255;
+  else if (x == 4)
+    rgb[0] = y, rgb[1] = 0, rgb[2] = 255;
+  else if (x == 5)
+    rgb[0] = 255, rgb[1] = 0, rgb[2] = 255 - y;
+}
+
+
+int count = 0;
+
 extern "C" void controllLEDTask(void *argument)
 {
-  for (int i = 0; i < 10; i++)
+  for (int i = 0; i < 64; i++)
   {
-    status_LED.set_rgb(i, 0, 255, 0);
+    status_LED.set_rgb(i, 0, 0, 0);
   }
   status_LED.show();
   while (1)
   {
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 110; i++)
     {
-      status_LED.set_rgb(i, 255, 255, 255);
-    }
-    status_LED.show();
-    osDelay(100);
-    for (int i = 0; i < 10; i++)
-    {
-      status_LED.set_rgb(i, 0, 0, 0);
+      count += 255;
+      if (count > 1530)
+        count = 0;
+      uint8_t rgb[3];
+      rainbow(count, rgb);
+      status_LED.set_rgb(i, rgb[0], rgb[1], rgb[2]);
     }
     status_LED.show();
     osDelay(100);
@@ -218,7 +245,7 @@ extern "C" void controllLEDTask(void *argument)
 
 extern "C" void WatchDogCallback(void *argument)
 {
-  if (HAL_GetTick() - last_receive > 1000)
+  if (HAL_GetTick() - last_receive > 2000)
   {
     Relay_ONOFF(false);
   }
