@@ -5,6 +5,7 @@
 /build/
 /Drivers/
 /.vscode/
+.cache/
 
 # CMake
 CMakeLists.txt.user
