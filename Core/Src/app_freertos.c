@@ -59,10 +59,39 @@ const osThreadAttr_t defaultTask_attributes = {
   .cb_size = sizeof(defaultTaskControlBlock),
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for controllLED */
+osThreadId_t controllLEDHandle;
+uint32_t controllLEDBuffer[ 512 ];
+osStaticThreadDef_t controllLEDControlBlock;
+const osThreadAttr_t controllLED_attributes = {
+  .name = "controllLED",
+  .stack_mem = &controllLEDBuffer[0],
+  .stack_size = sizeof(controllLEDBuffer),
+  .cb_mem = &controllLEDControlBlock,
+  .cb_size = sizeof(controllLEDControlBlock),
+  .priority = (osPriority_t) osPriorityBelowNormal,
+};
+/* Definitions for statusTask */
+osThreadId_t statusTaskHandle;
+uint32_t statusTaskBuffer[ 512 ];
+osStaticThreadDef_t statusTaskControlBlock;
+const osThreadAttr_t statusTask_attributes = {
+  .name = "statusTask",
+  .stack_mem = &statusTaskBuffer[0],
+  .stack_size = sizeof(statusTaskBuffer),
+  .cb_mem = &statusTaskControlBlock,
+  .cb_size = sizeof(statusTaskControlBlock),
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* Definitions for dischargeTimer */
 osTimerId_t dischargeTimerHandle;
 const osTimerAttr_t dischargeTimer_attributes = {
   .name = "dischargeTimer"
+};
+/* Definitions for WatchDogTask */
+osTimerId_t WatchDogTaskHandle;
+const osTimerAttr_t WatchDogTask_attributes = {
+  .name = "WatchDogTask"
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,7 +100,10 @@ const osTimerAttr_t dischargeTimer_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
+void controllLEDTask(void *argument);
+void statusTaskFunc(void *argument);
 void dischargeCallback(void *argument);
+void WatchDogCallback(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -97,6 +129,9 @@ void MX_FREERTOS_Init(void) {
   /* creation of dischargeTimer */
   dischargeTimerHandle = osTimerNew(dischargeCallback, osTimerOnce, NULL, &dischargeTimer_attributes);
 
+  /* creation of WatchDogTask */
+  WatchDogTaskHandle = osTimerNew(WatchDogCallback, osTimerPeriodic, NULL, &WatchDogTask_attributes);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
@@ -108,6 +143,12 @@ void MX_FREERTOS_Init(void) {
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* creation of controllLED */
+  controllLEDHandle = osThreadNew(controllLEDTask, NULL, &controllLED_attributes);
+
+  /* creation of statusTask */
+  statusTaskHandle = osThreadNew(statusTaskFunc, NULL, &statusTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -137,12 +178,56 @@ __weak void StartDefaultTask(void *argument)
   /* USER CODE END StartDefaultTask */
 }
 
+/* USER CODE BEGIN Header_controllLEDTask */
+/**
+* @brief Function implementing the controllLED thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_controllLEDTask */
+__weak void controllLEDTask(void *argument)
+{
+  /* USER CODE BEGIN controllLEDTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END controllLEDTask */
+}
+
+/* USER CODE BEGIN Header_statusTaskFunc */
+/**
+* @brief Function implementing the statusTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_statusTaskFunc */
+__weak void statusTaskFunc(void *argument)
+{
+  /* USER CODE BEGIN statusTaskFunc */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END statusTaskFunc */
+}
+
 /* dischargeCallback function */
 __weak void dischargeCallback(void *argument)
 {
   /* USER CODE BEGIN dischargeCallback */
 
   /* USER CODE END dischargeCallback */
+}
+
+/* WatchDogCallback function */
+__weak void WatchDogCallback(void *argument)
+{
+  /* USER CODE BEGIN WatchDogCallback */
+
+  /* USER CODE END WatchDogCallback */
 }
 
 /* Private application code --------------------------------------------------*/
