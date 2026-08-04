@@ -40,11 +40,11 @@ void MX_SPI1_Init(void)
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -117,28 +117,4 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
 }
 
 /* USER CODE BEGIN 1 */
-uint16_t MCP3208_read_u16(uint8_t channel)
-{
-  uint8_t aTxBuffer[3];
-  uint8_t aRxBuffer[3];
-
-  aTxBuffer[0] = MCP3208_START_BIT | MCP3208_MODE_SINGLE | ((channel & 0x04) >> 2);
-  aTxBuffer[1] = (channel & 0x03) << 6;
-  aTxBuffer[2] = 0;
-
-  //HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
-
-  if(HAL_SPI_TransmitReceive(&hspi1, aTxBuffer, aRxBuffer, 3, 100) != HAL_OK)
-  {
-    /* Transfer error in transmission process */
-    Error_Handler();
-  }
-
-  //HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
-
-  // RXデータの2バイト目の上位4ビットは値が不定のため0x0ｆでマスキング
-  uint16_t conv_result = ((uint16_t)(aRxBuffer[1] & 0x0f) << 8) | (uint16_t)aRxBuffer[2];
-
-  return conv_result;
-}
 /* USER CODE END 1 */
