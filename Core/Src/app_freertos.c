@@ -59,6 +59,18 @@ const osThreadAttr_t defaultTask_attributes = {
   .cb_size = sizeof(defaultTaskControlBlock),
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for LEDTask */
+osThreadId_t LEDTaskHandle;
+uint32_t controllLEDTaskBuffer[ 512 ];
+osStaticThreadDef_t controllLEDTaskControlBlock;
+const osThreadAttr_t LEDTask_attributes = {
+  .name = "LEDTask",
+  .stack_mem = &controllLEDTaskBuffer[0],
+  .stack_size = sizeof(controllLEDTaskBuffer),
+  .cb_mem = &controllLEDTaskControlBlock,
+  .cb_size = sizeof(controllLEDTaskControlBlock),
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* Definitions for dischargeTimer */
 osTimerId_t dischargeTimerHandle;
 const osTimerAttr_t dischargeTimer_attributes = {
@@ -76,6 +88,7 @@ const osTimerAttr_t cantx_task_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
+void controllLEDTask(void *argument);
 void dischargeCallback(void *argument);
 void cantxCallback(void *argument);
 
@@ -118,6 +131,9 @@ void MX_FREERTOS_Init(void) {
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
+  /* creation of LEDTask */
+  LEDTaskHandle = osThreadNew(controllLEDTask, NULL, &LEDTask_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -144,6 +160,24 @@ __weak void StartDefaultTask(void *argument)
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */
+}
+
+/* USER CODE BEGIN Header_controllLEDTask */
+/**
+* @brief Function implementing the LEDTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_controllLEDTask */
+__weak void controllLEDTask(void *argument)
+{
+  /* USER CODE BEGIN controllLEDTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END controllLEDTask */
 }
 
 /* dischargeCallback function */

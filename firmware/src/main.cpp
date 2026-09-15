@@ -41,7 +41,7 @@ uint16_t ADC_buff[3];
 ID  own_id;
 
 float output_voltage = 0.0f;
-
+int rx_time = 0;
 
 uint16_t MCP3208_Read(uint8_t channel)
 {
@@ -108,8 +108,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 extern "C" void StartDefaultTask(void *argument)
 {
-  led.set_rgb(255, 0, 0);
-  led.start();
+
   canfd = new CANFD(&hfdcan1);
 	canfd->start();
 
@@ -127,7 +126,9 @@ extern "C" void StartDefaultTask(void *argument)
   CANFD_Frame tx_frame;
 	tx_frame.id = own_id.id;
 	tx_frame.is_remote = true;
-	canfd->tx(tx_frame);  
+	canfd->tx(tx_frame);
+
+  while(!canfd->rx_available()) osDelay(100);
 
   osTimerStart(cantx_taskHandle, 100);
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
@@ -140,19 +141,6 @@ extern "C" void StartDefaultTask(void *argument)
     {
       CANFD_Frame receive;
       canfd->rx(receive);
-
-      if(receive.id != common_id.id && receive.id != common_id.id && receive.is_remote) 
-      {
-        CANFD_Frame tx_frame;
-	      tx_frame.id = own_id.id;
-	      tx_frame.is_remote = true;
-	      canfd->tx(tx_frame);  
-      }
-
-      if(receive.id != own_id.id && receive.id != own_id.id && receive.is_remote) 
-      {
-        led.set_rgb(255, 255, 255);
-      }
 
       PWRTX_CANPacket packet;
       memcpy(&packet, receive.data, receive.size);
@@ -170,8 +158,6 @@ extern "C" void StartDefaultTask(void *argument)
 	    } else {
         if (HAL_GPIO_ReadPin(EMENGECY_GPIO_Port, EMENGECY_Pin) == GPIO_PIN_SET)
         {
-          led.set_rgb(100, 50, 0);
-        } else {
           led.set_rgb(255, 0, 0);
           HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_RESET);
           osDelay(30);
@@ -180,6 +166,17 @@ extern "C" void StartDefaultTask(void *argument)
         }
 	    }
       onoff = packet.pwrstatus;
+      rx_time = HAL_GetTick();
+    }
+
+    if (HAL_GetTick() - rx_time > 1000)
+    {
+      led.set_rgb(255, 0, 0);
+      HAL_GPIO_WritePin(ONOFF_GPIO_Port, ONOFF_Pin, GPIO_PIN_RESET);
+      osDelay(30);
+      HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_SET);
+      osTimerStart(dischargeTimerHandle, 300);
+      onoff = false;
     }
     osDelay(10);
   }
@@ -211,4 +208,100 @@ extern "C" void cantxCallback(void *argument)
 extern "C" void dischargeCallback(void *argument)
 {
     HAL_GPIO_WritePin(DISCHARGE_GPIO_Port, DISCHARGE_Pin, GPIO_PIN_RESET);
+}
+
+
+void rainbow(int count, uint8_t *rgb)
+{
+  int x = count / 255;
+  int y = count % 255;
+
+  if (x == 0)
+    rgb[0] = 255, rgb[1] = y, rgb[2] = 0;
+  else if (x == 1)
+    rgb[0] = 255 - y, rgb[1] = 255, rgb[2] = 0;
+  else if (x == 2)
+    rgb[0] = 0, rgb[1] = 255, rgb[2] = y;
+  else if (x == 3)
+    rgb[0] = 0, rgb[1] = 255 - y, rgb[2] = 255;
+  else if (x == 4)
+    rgb[0] = y, rgb[1] = 0, rgb[2] = 255;
+  else if (x == 5)
+    rgb[0] = 255, rgb[1] = 0, rgb[2] = 255 - y;
+
+  // 彩度を少し強める（100 = 1.0倍）
+  constexpr int saturation_scale = 120;
+  const int gray = (static_cast<int>(rgb[0]) + static_cast<int>(rgb[1]) + static_cast<int>(rgb[2])) / 3;
+
+  for (int i = 0; i < 3; i++)
+  {
+    int v = gray + ((static_cast<int>(rgb[i]) - gray) * saturation_scale) / 100;
+    if (v < 0)
+      v = 0;
+    else if (v > 255)
+      v = 255;
+    rgb[i] = static_cast<uint8_t>(v);
+  }
+}
+
+
+int count = 0;
+
+extern "C" void controllLEDTask(void *argument)
+{
+  constexpr int led_num = 64;
+  for (int i = 0; i < 64; i++)
+  {
+    status_LED.set_rgb(i, 0, 0, 0);
+  }
+  status_LED.show();
+  while (1)
+  {
+    for (int i = 0; i < led_num; i++)
+    {
+      uint8_t rgb[3];
+      // 高速で流れるレインボー
+      int led_count = (count + i * 24) % 1530;
+      rainbow(led_count, rgb);
+
+      // ネオン感は控えめに（過度な白飛びを防ぐ）
+      int r = rgb[0];
+      int g = rgb[1];
+      int b = (static_cast<int>(rgb[2]) * 115) / 100;
+      if (b > 255) b = 255;
+
+      // 明滅（0.67～0.94倍）
+      int t = (count * 2 + i * 9) % 510;
+      int pulse = (t < 255) ? t : (510 - t); // 0..255..0
+      int gain = 170 + (pulse * 70) / 255;
+
+      r = (r * gain) / 255;
+      g = (g * gain) / 255;
+      b = (b * gain) / 255;
+
+      // 全体輝度を抑えて白っぽさを回避
+      constexpr int master = 170;
+      r = (r * master) / 255;
+      g = (g * master) / 255;
+      b = (b * master) / 255;
+
+      // たまに青系スパークル
+      int sparkle = (i * 73 + count * 29) % 211;
+      if (sparkle < 3)
+      {
+        g += 20;
+        b += 40;
+        if (r > 255) r = 255;
+        if (g > 255) g = 255;
+        if (b > 255) b = 255;
+      }
+
+      status_LED.set_rgb(i, static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b));
+    }
+    status_LED.show();
+    count += 18;
+    if (count >= 1530)
+      count = 0;
+    osDelay(10);
+  }
 }
