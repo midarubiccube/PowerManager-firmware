@@ -128,7 +128,9 @@ extern "C" void StartDefaultTask(void *argument)
 	tx_frame.is_remote = true;
 	canfd->tx(tx_frame);
 
-  while(!canfd->rx_available()) osDelay(100);
+  //while(!canfd->rx_available()) osDelay(100);
+  led.set_rgb(255, 0, 0);
+  led.start();
 
   osTimerStart(cantx_taskHandle, 100);
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
