@@ -6,7 +6,7 @@
 #include "FullColorLED.hpp"
 #include "WS2812B.hpp"
 
-#include "messageFormat/powerboard.hpp"
+//#include "messageFormat/powerboard.hpp"
 
 extern DMA_HandleTypeDef hdma_tim2_ch1;
 
@@ -106,14 +106,14 @@ extern "C" void StartDefaultTask(void *argument)
   canfd = new CANFD(&hfdcan1);
   canfd->start();
 
-  ID_Format filter_id;
+  /*ID_Format filter_id;
   filter_id.format.broadcast = true;
   canfd->set_filter_mask(0, filter_id.id, filter_id.id);
 
   filter_id.id = 0;
   filter_id.format.to_BoardType = Board_Type::PowerBoard;
   filter_id.format.to_BoardID = 0;
-  canfd->set_filter_mask(1, filter_id.id, 0xFF);
+  canfd->set_filter_mask(1, filter_id.id, 0xFF);*/
 
   CANFD_Frame test;
   test.id = 10;
@@ -131,7 +131,7 @@ extern "C" void StartDefaultTask(void *argument)
       CANFD_Frame data;
       canfd->rx(data);
 
-      ID_Format rsv_id;
+ /*     ID_Format rsv_id;
       rsv_id.id = data.id;
       if (rsv_id.format.from_BoardType == Board_Type::Master_Board && rsv_id.format.message_type == Message_Type::Target)
       {
@@ -151,7 +151,7 @@ extern "C" void StartDefaultTask(void *argument)
           Relay_ONOFF(true);
         }
       }
-      last_receive = HAL_GetTick();
+      last_receive = HAL_GetTick();*/
     }
 
     osDelay(10);
@@ -170,7 +170,7 @@ extern "C" void statusTaskFunc(void *argument)
     {
       ad = ((float)adS - 350.0) / 62.0;
     }
-    HAL_ADC_Stop(&hadc1);
+   /*HAL_ADC_Stop(&hadc1);
     PowerBoard_Status status = {0};
     ID_Format id;
     id.format.from_BoardID = 0;
@@ -185,7 +185,7 @@ extern "C" void statusTaskFunc(void *argument)
     sendmsg.size = sizeof(PowerBoard_Status); 
     memcpy(sendmsg.data, &status, sizeof(PowerBoard_Status));
     canfd->tx(sendmsg);
-    osDelay(10);
+    osDelay(10);**/
   }
 }
 
